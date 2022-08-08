@@ -1,68 +1,75 @@
-from Task1 import data
-import json
-import pprint
+from Task1 import top_movies
 from bs4 import BeautifulSoup
 import requests
+import json
+def movie_analisis():
+  ht=[]
+  for i in range(0,50):
+    a=top_movies[i]["link"]
+    d1={}
+    u=[]
+    page=requests.get(a)
+    soup=BeautifulSoup(page.text,'html.parser')
 
-movie_list_details=[]
-# print(data)
-for i in data:
+    for ul in soup.find_all('a', class_="ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link"):
+      u.append(ul.get_text())
+    list=["Hindi","English","Tamil","Telugu","Malayalam","Kannada","Bengali","Marathi"]
+    hh=[]
+    for i in u:
+      for j in list:
+        if i==j:
+          hh.append(i)
 
-    url=i['movie URL']
+    movie_name=soup.find("div",class_="sc-94726ce4-2 khmuXj").h1.get_text()
+    d1["movie_name"]=movie_name
 
-    def scrap_movie_detail(movie_url):
-        # movie_url1=movie_url['Url']
-        page=requests.get(movie_url)
-        soup=BeautifulSoup(page.text,"html.parser")
-        # print(soup)
-        title=soup.find('div',class_="col mob col-center-right col-full-xs mop-main-column")
-        # print(title)
-        title1=title.find('div',class_="thumbnail-scoreboard-wrap")
-        # # print(title1)
-        poster=title1.find('img',class_="posterImage js-lazyLoad")
-        poster1=poster['src']
-        # print(poster1)
-        title2=title1.find('score-board',class_="scoreboard")
-        # print(title2)
-        name=title2.find("h1",class_="scoreboard__title" ).get_text()
-        # print(name)
-        s=soup.find('ul',class_="content-meta info")
-        # print(s)
-        genre=s.find('div',class_='meta-value genre').get_text().split()
-        # print(genre)
-        sub_tle=s.find_all('li',class_="meta-row clearfix")
-        # print(sub_tle)
-        movie_d={}
-        movie_d['Name']=name
+    runtime=soup.find("div",class_="sc-94726ce4-3 eSKKHi").get_text().strip()
+    # print(runtime)
+    u=runtime[-6:]
+    # print(u)
+    # a=u[3:5]
+    # f=int(u[0])*60
+    # s=(f+int(a),"minute")
+    d1["Runtime"]=u
 
-        for i in sub_tle:
-            k=i.find('div',class_="meta-label subtle").get_text()
-            key=k[:-1]
-            # print(key)
-            value=i.find('div',class_="meta-value").get_text().strip().replace(" ","").replace('\n',"").replace('\u00a0'," ")
-            # print(value)
-            movie_d['Name']=name
-            movie_d[key]=value
-        time=int(movie_d["Runtime"][0])*60
-        for i in movie_d['Runtime'][2:]:
-                if 'm' not in i:
-                    time+=int(i)
-                else:
-                    break
-        movie_d["Runtime"]=str(time)+' m'
-        movie_d["Poster_image_url"]=poster1
-        movie_list_details.append(movie_d)
-        # movie_d["Original Language"]=movie_d["Original Language"].strip().split()
-         # print(movie_list_details)
-        movie_d["Genre"]=genre
-        with open("Task5.json","w") as f:
-            json.dump(movie_list_details, f,indent=6)
-        # return movie_d
-        return movie_list_details
+    bio=soup.find("div",class_="sc-16ede01-7 hrgVKw").get_text()
+    d1["bio"]=bio
 
-    movie_list=scrap_movie_detail(url)
+    director=soup.find("a",class_="ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link").get_text()
+    # print(director)
+    d1["Director"]=director
 
+    poster_image=soup.find("div",class_="ipc-media ipc-media--poster-27x40 ipc-image-media-ratio--poster-27x40 ipc-media--baseAlt ipc-media--poster-l ipc-poster__poster-image ipc-media__img").img['src']
+    d1["postername"]=poster_image
 
-	
-	
-	
+    abc=soup.find('div',class_="ipc-chip-list__scroller")
+    ga=abc.find_all('span')
+    list1=[]
+    for i in ga:
+        list1.append(i.get_text())
+    d1['genre']=list1
+
+    d1["language"]=hh
+
+    Detail=soup.find("section",cel_widget_id="StaticFeature_Details")
+    s=Detail.find_all("div")
+    y=[]
+    for ul in s:
+      h=ul.find_all("ul")
+      for li in h:
+        o=li.find_all("li")
+        for aa in o:
+          z=aa.find_all('a')
+          dtails=[details.get_text() for details in z]
+          for p in dtails:
+             y.append(p)
+    d1["country"]=y[5]
+    b=y[1].split()
+    d1["release_year"]=b[2]
+    d1["release_date"]=b[1]+b[0]
+    
+    ht.append(d1)
+    with open("task5.json","w")as mm:
+       json.dump(ht,mm,indent=4)
+
+movie_analisis()    

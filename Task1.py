@@ -1,59 +1,40 @@
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 import json
-import pprint
-def adventure_movie():
-    adventure_url="https://www.rottentomatoes.com/top/bestofrt/top_100_action__adventure_movies/"
-    adventure_api=requests.get(adventure_url)
+from pprint import pprint
+def scrap_top_list():
+    url='https://www.imdb.com/india/top-rated-indian-movies//'
+    page=requests.get(url)
+    soup=BeautifulSoup(page.content,'html.parser')
+    # print(soup)
 
-    htmlcontent=adventure_api.content
-    soup=BeautifulSoup(htmlcontent,"html.parser")
-    table_tag=soup.find("table",class_="table")
-    tr=table_tag.find_all("tr")
-    top_movie=[]
-    for i in tr: 
-        movie_rank=i.find_all("td",class_="bold")
-        for j in movie_rank:
-            rank=j.get_text()
-        movie_rating=i.find_all("span",class_="tMeterScore")
-        for rate in  movie_rating:
-            rating=rate.get_text().strip()
-        movie_name=i.find_all("a",class_="unstyled articleLink")
-        for name in movie_name:
-            title=name.get_text().strip()
-            movie_name=title
-        movie_reviews=i.find_all("td",class_="right hidden-xs")
-        for rev in movie_reviews:
-            reviews=rev.get_text().strip()
-        url=i.find_all("a",class_="unstyled articleLink")
-        for i in url:
-            link=i["href"]
-            movie_link="https://www.rottentomatoes.com"+link
-            url=requests.get(movie_link)
-            htmlcontent=url.content
-            soup=BeautifulSoup(htmlcontent,"html.parser")
-            wrap=soup.find("div",class_="col mob col-center-right col-full-xs mop-main-column")
-            cd=wrap.find("div",class_="thumbnail-scoreboard-wrap").p.get_text()
-            year1=cd[:4]
-            details={"movie_rank":"","movie_rating":"","movie_name":"","movie_reviews":"","movie URL":"","year":""}
-            details["movie_rank"]=rank
-            details["movie_rating"]=rating
-            details["movie_name"]=movie_name
-            details["movie_reviews"]=reviews
-            details["movie URL"]=movie_link
-            details["year"]=year1
-            top_movie.append(details.copy())
-        #     print(top_movie)
-       
-    with open("Task1.json","w")as file:
-        json.dump(top_movie,file,indent=4)
-    return top_movie
-data=adventure_movie()
-# print(data)
-# pprint.pprint(adventure_movie())
-
-
-
-	
-	
-	
+    a=soup.find('tbody',class_='lister-list')
+    # print(a)
+    b=a.find_all('tr')
+    # print(b)
+    c=[]
+    for i in b:
+        movie_detail={}
+        movie_name=i.find('td',class_="titleColumn").a.get_text()
+        # print(movie_name)
+        movie_detail["movie_name"]=movie_name
+        movie_rank=i.find('td',class_="titleColumn").get_text().strip().replace("\n","").replace(" ","")
+        movie_rank=movie_rank[:1]
+        movie_detail["movie_rank"]=int(movie_rank)
+        rating=i.find('td', class_="ratingColumn imdbRating").strong.get_text()
+        # print(rating)
+        movie_detail["rating"]=float(rating)
+        year_of_release=i.find('td',class_="titleColumn").span.get_text()
+        year=year_of_release[1:-1]
+        movie_detail["year_of_release"]=int(year)
+        movie_link=i.find('td',class_="titleColumn").a['href']
+        # print(movie_link)
+        link='https://www.imdb.com'+movie_link
+        # print(link)
+        movie_detail["link"]=link
+        c.append(movie_detail)
+        pprint(c)
+    file=open('Movies_Detail.json','w')
+    w=json.dump(c,file,indent=4)
+    return c
+top_movies=scrap_top_list()

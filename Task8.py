@@ -1,30 +1,26 @@
-from Task1 import data
+from Task1 import top_movies
+from Task4 import scrap
 import json
-import requests
-from bs4 import BeautifulSoup
 import os
-url_list=[]
-for i in data:
-    url_list.append(i["movie URL"])
-def text_file(ulist):
-    last=[]
-    for i in ulist:
-        id=i[33:]
-        if os.path.exists(id+".json")==True:
-            with open(id+".json","r") as movieDataFile:
-                data=movieDataFile.read()
-                final=json.loads(data)
-            last.append(final)
-        else:
-            final={}
-            LinkData=requests.get(i)
-            soup=BeautifulSoup(LinkData.text,"html.parser")
-            final["name"]=soup.find("h1").text
-            main=soup.find("ul",class_="content-meta info")
-            all=main.find_all("li",class_="meta-row clearfix")
-            for i in all:
-                final[i.find("div",class_="meta-label subtle").text.strip()]=i.find("div",class_="meta-value").text.replace(" ","").replace("\n","").strip()
-                with open(id+"Task_8.json","w") as file:
-                    json.dump(final,file,indent=4)
-                last.append(final)
-text_file(url_list)
+from bs4 import BeautifulSoup
+
+url=top_movies[1]["link"]
+
+def movie_details(movie_detail):
+    movie_id=""
+    for id in movie_detail[27:-1]:
+        movie_id+=id
+        # print(movie_id)
+    filename=movie_id+'.json'
+    text=os.path.exists(filename)
+    if text==True:
+        with open(filename,"r")as f:
+            a=json.load(f)    
+        print(a)   
+    else:
+        data=scrap(url) 
+        with open(filename,"w") as f:
+            json.dump(data,f,indent=6)
+        # print(data)  
+          
+movie_details(url)        
